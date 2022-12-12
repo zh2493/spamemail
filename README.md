@@ -38,7 +38,6 @@ A spam detection system built on AWS cloud, that upon receipt of an email messag
 1.  Open SES home on AWS console and navigate to *Domains*. Verify a new domain (prerequisites) that you already own. Copy the 'TXT record' provided on console and add it in your Domain provider's site. 
 2.  From the SES home, go to the 'SMTP settings' and copy the 'server name'. Add this as a 'MX record' in your Domain provider's site, just like the 'TXT record' added in the last step. This and previous settings will link the Amazon SES with your custom email address.
 3.  Now we need to receive the email that is sent on our custom email address, and store it in the S3 bucket. For this - from the SES home, navigate to the *Email Receiving > Rule Sets > Create Rule*. Use something like the below image to configure the rule set. Use the name of the S3 bucket which was created using the cloud formation template in the previous steps.
-![Screenshot 2021-06-21 at 9 15 07 PM](https://user-images.githubusercontent.com/26367904/122848789-dd9a6300-d327-11eb-87c6-0cae8fd0eb9b.png)
 
 ### Setting up Lambda function:
 We need to setup a Lambda function that gets triggered whenever an email is received on the custom email address.
