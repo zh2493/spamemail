@@ -1,0 +1,87 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Spam Detector
+Parameters:
+  PredictionEndpoint:
+    Type: String
+Resources:
+  storeemail6998:
+    Type: AWS::S3::Bucket
+    DependsOn:
+      - LambdaFunction
+    Properties:
+      AccessControl: PublicRead
+      BucketName: storeemail6998zh
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: PublicReadForGetBucketObjects
+            Effect: Allow
+            Principal: "*"
+            Action: "*"
+            Resource: !Join
+              - ""
+              - - "arn:aws:s3:::"
+                - !Ref storeemail6998
+                - /*
+      Bucket: !Ref storeemail6998
+  LambdaPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn: 
+      - LambdaFunction
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref LambdaFunction
+      Principal: s3.amazonaws.com
+  spamemailrole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: spamemailrole
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+        Version: 2012-10-17
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSLambdaExecute
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/AmazonSESFullAccess
+        - arn:aws:iam::aws:policy/AmazonSageMakerFullAccess
+      Path: /
+  LambdaFunction:
+    Type: 'AWS::Lambda::Function'
+    DependsOn:
+      - spamemailrole
+    Properties:
+      Handler: lambda_function.lambda_handler
+      Role:  !GetAtt spamemailrole.Arn
+      Layers:
+        - arn:aws:lambda:us-east-1:336392948345:layer:AWSSDKPandas-Python39:1
+      Code:
+        S3Bucket: a3lambdazip
+        S3Key: asm3.zip
+      Runtime: python3.8
+      Environment:
+        Variables:
+          ENDPOINT_NAME: !Ref PredictionEndpoint
+      Timeout: 600
+      TracingConfig:
+        Mode: Active
+  SesRuleSet:
+    Type: "AWS::SES::ReceiptRuleSet"
+  SesRule:
+    Type: "AWS::SES::ReceiptRule"
+    Properties:
+      Rule:
+        Actions:
+          - S3Action:
+              BucketName: !Ref storeemail6998
+        Enabled: true
+        ScanEnabled: false
+      RuleSetName: !Ref SesRuleSet
